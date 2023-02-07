@@ -33,6 +33,14 @@ func genEthGetBalance(w io.Writer, s State) error {
 	return err
 }
 
+func genEthGetBalanceArchive(w io.Writer, s State) error {
+	addr := s.RandomAddress()
+	r := s.RandInt64()
+	blockNum := s.CurrentBlock() - uint64(r%100) - 200
+	_, err := fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%d,"method":"eth_getBalance","params":["%s","0x%x"]}`+"\n", s.ID(), addr, blockNum)
+	return err
+}
+
 func genEthGetBlockByNumber(w io.Writer, s State) error {
 	r := s.RandInt64()
 	// TODO: ~half of the block numbers are further from head
@@ -107,6 +115,7 @@ func installDefaults(gen *generator, methods map[string]int64) error {
 		"eth_call":                  genEthCall,
 		"eth_getTransactionReceipt": genEthGetTransactionReceipt,
 		"eth_getBalance":            genEthGetBalance,
+		"eth_getBalance#Archive":    genEthGetBalanceArchive,
 		"eth_getBlockByNumber":      genEthGetBlockByNumber,
 		"eth_getTransactionCount":   genEthGetTransactionCount,
 		"eth_blockNumber":           genEthBlockNumber,
