@@ -88,6 +88,66 @@ func genEthGetCode(w io.Writer, s State) error {
 	return err
 }
 
+func genEthEstimateGas(w io.Writer, s State) error {
+	to, from, input, block := s.RandomCall()
+	var err error
+	if to != "" {
+		_, err = fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%d,"method":"eth_estimateGas","params":[{"to":%q,"from":%q,"data":%q},"0x%x"]}`+"\n", s.ID(), to, from, input, block-1)
+	} else {
+		_, err = fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%d,"method":"eth_estimateGas","params":[{"from":%q,"data":%q},"0x%x"]}`+"\n", s.ID(), from, input, block-1)
+	}
+	return err
+}
+
+func getEthGetBlockByHash(w io.Writer, s State) error {
+	block := s.RandomBlock()
+	_, err := fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%d,"method":"eth_getBlockByHash","params":["%s",false]}`+"\n", s.ID(), block)
+	return err
+}
+
+func getEthGetTransactionByBlockNumberAndIndex(w io.Writer, s State) error {
+	r := s.RandInt64()
+	blockNum := s.CurrentBlock() - uint64(r%100) - 200
+	_, err := fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%d,"method":"eth_getTransactionByBlockNumberAndIndex","params":["0x%x","0x%x"]}`+"\n", s.ID(), blockNum, r%5)
+	return err
+}
+
+func getNetVersion(w io.Writer, s State) error {
+	_, err := fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%d,"method":"net_version"}`+"\n", s.ID())
+	return err
+}
+
+func getEthGasPrice(w io.Writer, s State) error {
+	_, err := fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%d,"method":"eth_gasPrice"}`+"\n", s.ID())
+	return err
+}
+
+func getNetListening(w io.Writer, s State) error {
+	_, err := fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%d,"method":"net_listening"}`+"\n", s.ID())
+	return err
+}
+
+func getNetPeerCount(w io.Writer, s State) error {
+	_, err := fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%d,"method":"net_peerCount"}`+"\n", s.ID())
+	return err
+}
+
+func getEthSyncing(w io.Writer, s State) error {
+	_, err := fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%d,"method":"eth_syncing"}`+"\n", s.ID())
+	return err
+}
+
+func getEthGetStorageAt(w io.Writer, s State) error {
+	addr := s.RandomAddress()
+	_, err := fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%d,"method":"eth_getStorageAt","params":["%s","0x0","latest"]}`+"\n", s.ID(), addr)
+	return err
+}
+
+func getEthAccounts(w io.Writer, s State) error {
+	_, err := fmt.Fprintf(w, `{"jsonrpc":"2.0","id":%d,"method":"eth_accounts"}`+"\n", s.ID())
+	return err
+}
+
 func installDefaults(gen *generator, methods map[string]int64) error {
 	// Top queries by weight, pulled from a 5000 Infura query sample on Dec 2019.
 	//     3 "eth_accounts"
@@ -112,16 +172,26 @@ func installDefaults(gen *generator, methods map[string]int64) error {
 	//  1928 "eth_call"
 
 	rpcMethod := map[string]func(io.Writer, State) error{
-		"eth_call":                  genEthCall,
-		"eth_getTransactionReceipt": genEthGetTransactionReceipt,
-		"eth_getBalance":            genEthGetBalance,
-		"eth_getBalance#Archive":    genEthGetBalanceArchive,
-		"eth_getBlockByNumber":      genEthGetBlockByNumber,
-		"eth_getTransactionCount":   genEthGetTransactionCount,
-		"eth_blockNumber":           genEthBlockNumber,
-		"eth_getTransactionByHash":  genEthGetTransactionByHash,
-		"eth_getLogs":               genEthGetLogs,
-		"eth_getCode":               genEthGetCode,
+		"eth_call":                                genEthCall,
+		"eth_getTransactionReceipt":               genEthGetTransactionReceipt,
+		"eth_getBalance":                          genEthGetBalance,
+		"eth_getBalance#Archive":                  genEthGetBalanceArchive,
+		"eth_getBlockByNumber":                    genEthGetBlockByNumber,
+		"eth_getTransactionCount":                 genEthGetTransactionCount,
+		"eth_blockNumber":                         genEthBlockNumber,
+		"eth_getTransactionByHash":                genEthGetTransactionByHash,
+		"eth_getLogs":                             genEthGetLogs,
+		"eth_getCode":                             genEthGetCode,
+		"eth_estimateGas":                         genEthEstimateGas,
+		"eth_getBlockByHash":                      getEthGetBlockByHash,
+		"eth_getTransactionByBlockNumberAndIndex": getEthGetTransactionByBlockNumberAndIndex,
+		"net_version":                             getNetVersion,
+		"eth_gasPrice":                            getEthGasPrice,
+		"net_listening":                           getNetListening,
+		"net_peerCount":                           getNetPeerCount,
+		"eth_syncing":                             getEthSyncing,
+		"eth_getStorageAt":                        getEthGetStorageAt,
+		"eth_accounts":                            getEthAccounts,
 	}
 
 	for method, weight := range methods {

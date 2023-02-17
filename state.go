@@ -19,6 +19,7 @@ type State interface {
 	RandomContract() (addr string, topics []string)
 	RandomAddress() string
 	RandomTransaction() string
+	RandomBlock() string
 	RandomCall() (to, from, input string, block uint64)
 }
 
@@ -38,6 +39,7 @@ type liveState struct {
 
 	currentBlock uint64
 	transactions []eth.Transaction
+	blockHashes  map[uint64]string
 }
 
 func (s *liveState) ID() int64 {
@@ -89,6 +91,20 @@ func (s *liveState) RandomContract() (addr string, topics []string) {
 	return c.Addr, c.Topics
 }
 
+func (s *liveState) RandomBlock() string {
+	if len(s.blockHashes) == 0 {
+		return ""
+	}
+	idx := int(s.randSrc.Int63()) % len(s.blockHashes)
+	for _, value := range s.blockHashes {
+		if idx == 0 {
+			return value
+		}
+		idx--
+	}
+	return ""
+}
+
 var popularContracts = []struct {
 	Addr   string
 	Topics []string
@@ -136,6 +152,15 @@ func (p *stateProducer) Refresh(oldState *liveState) (*liveState, error) {
 	if len(b.Transactions) == 0 {
 		return nil, errEmptyBlock
 	}
+
+	blockHashes := make(map[uint64]string)
+	for k, v := range oldState.blockHashes {
+		blockHashes[k] = v
+	}
+
+	blockHashes[b.Number.UInt64()] = b.Hash.String()
+	blockHashes[b.Number.UInt64()-1] = b.ParentHash.String()
+
 	// txs will grow to the maximum contract transaction list size we'll see in a block, and the higher-indexed ones will stick around longer
 	txs := oldState.transactions
 	for i, tx := range b.Transactions {
@@ -159,6 +184,7 @@ func (p *stateProducer) Refresh(oldState *liveState) (*liveState, error) {
 
 		currentBlock: b.Number.UInt64(),
 		transactions: txs,
+		blockHashes:  blockHashes,
 	}
 	return &state, nil
 }
