@@ -1,4 +1,4 @@
-module github.com/shazow/ethspam
+module github.com/a10zn8/ethspam
 
 go 1.13
 
