@@ -38,14 +38,14 @@ func genEthGetBalanceArchive(s State) string {
 
 func genEthGetBlockByNumber(s State) string {
 	r := s.RandInt64()
-	// TODO: ~half of the block numbers are further from head
 	blockNum := s.CurrentBlock() - uint64(r%5) // Within the last ~minute
-	full := "true"
-	if r%2 >= 0 {
-		full = "false"
-	}
+	return fmt.Sprintf(`{"jsonrpc":"2.0","id":%d,"method":"eth_getBlockByNumber","params":["0x%x",%s]}`+"\n", s.ID(), blockNum, false)
+}
 
-	return fmt.Sprintf(`{"jsonrpc":"2.0","id":%d,"method":"eth_getBlockByNumber","params":["0x%x",%s]}`+"\n", s.ID(), blockNum, full)
+func genEthGetBlockByNumberFull(s State) string {
+	r := s.RandInt64()
+	blockNum := s.CurrentBlock() - uint64(r%5) // Within the last ~minute
+	return fmt.Sprintf(`{"jsonrpc":"2.0","id":%d,"method":"eth_getBlockByNumber","params":["0x%x",%s]}`+"\n", s.ID(), blockNum, true)
 }
 
 func genEthGetTransactionCount(s State) string {
@@ -91,6 +91,11 @@ func getEthGetBlockByHash(s State) string {
 	return fmt.Sprintf(`{"jsonrpc":"2.0","id":%d,"method":"eth_getBlockByHash","params":["%s",false]}`+"\n", s.ID(), block)
 }
 
+func getEthGetBlockByHashFull(s State) string {
+	block := s.RandomBlock()
+	return fmt.Sprintf(`{"jsonrpc":"2.0","id":%d,"method":"eth_getBlockByHash","params":["%s",true]}`+"\n", s.ID(), block)
+}
+
 func getEthGetTransactionByBlockNumberAndIndex(s State) string {
 	r := s.RandInt64()
 	blockNum := s.CurrentBlock() - uint64(r%100) - 200
@@ -122,8 +127,77 @@ func getEthGetStorageAt(s State) string {
 	return fmt.Sprintf(`{"jsonrpc":"2.0","id":%d,"method":"eth_getStorageAt","params":["%s","0x0","latest"]}`+"\n", s.ID(), addr)
 }
 
+// deprecated in erigon
 func getEthAccounts(s State) string {
 	return fmt.Sprintf(`{"jsonrpc":"2.0","id":%d,"method":"eth_accounts"}`+"\n", s.ID())
+}
+
+func getEthChainId(s State) string {
+	return fmt.Sprintf(`{"jsonrpc":"2.0","id":%d,"method":"eth_chainId"}`+"\n", s.ID())
+}
+
+func getEthProtocolVersion(s State) string {
+	return fmt.Sprintf(`{"jsonrpc":"2.0","id":%d,"method":"eth_protocolVersion"}`+"\n", s.ID())
+}
+
+func getEthFeeHistory(s State) string {
+	return fmt.Sprintf(`{"jsonrpc":"2.0","id":%d,"method":"eth_feeHistory","params":[%d, "latest", []]}`+"\n", s.ID(), s.RandInt64()%10)
+}
+
+func getEthMaxPriorityFeePerGas(s State) string {
+	return fmt.Sprintf(`{"jsonrpc":"2.0","id":%d,"method":"eth_maxPriorityFeePerGas"}`+"\n", s.ID())
+}
+
+func getEthGetTransactionByBlockHashAndIndex(s State) string {
+	r := s.RandInt64()
+	hash := s.RandomBlock()
+	return fmt.Sprintf(`{"jsonrpc":"2.0","id":%d,"method":"eth_getTransactionByBlockHashAndIndex","params":["0x%x","0x%x"]}`+"\n", s.ID(), hash, r%5)
+}
+
+func getEthGetBlockTransactionCountByHash(s State) string {
+	hash := s.RandomBlock()
+	return fmt.Sprintf(`{"jsonrpc":"2.0","id":%d,"method":"eth_getBlockTransactionCountByHash","params":["0x%x"]}`+"\n", s.ID(), hash)
+}
+
+func getEthGetBlockTransactionCountByNumber(s State) string {
+	block := s.CurrentBlock() - uint64(s.RandInt64()%100)
+	return fmt.Sprintf(`{"jsonrpc":"2.0","id":%d,"method":"eth_getBlockTransactionCountByNumber","params":["0x%x"]}`+"\n", s.ID(), block)
+}
+
+func getEthGetBlockReceipts(s State) string {
+	return fmt.Sprintf(`{"jsonrpc":"2.0","id":%d,"method":"eth_getBlockReceipts","params":["latest"]}`+"\n", s.ID())
+}
+
+func getTraceBlock(s State) string {
+	return fmt.Sprintf(`{"jsonrpc":"2.0","id":%d,"method":"trace_block","params":["latest"]}`+"\n", s.ID())
+}
+
+func getTraceTransaction(s State) string {
+	hash := s.RandomTransaction()
+	return fmt.Sprintf(`{"jsonrpc":"2.0","id":%d,"method":"trace_transaction","params":["%s"]}`+"\n", s.ID(), hash)
+}
+
+func getTraceReplayTransaction(s State) string {
+	hash := s.RandomTransaction()
+	return fmt.Sprintf(`{"jsonrpc":"2.0","id":%d,"method":"trace_replayTransaction","params":["%s", ["trace"]]}`+"\n", s.ID(), hash)
+}
+
+func getTraceReplayBlockTransactions(s State) string {
+	return fmt.Sprintf(`{"jsonrpc":"2.0","id":%d,"method":"trace_replayBlockTransactions","params":["latest", ["trace"]]}`+"\n", s.ID())
+}
+
+func getDebugTraceTransaction(s State) string {
+	hash := s.RandomTransaction()
+	return fmt.Sprintf(`{"jsonrpc":"2.0","id":%d,"method":"debug_traceTransaction","params":["%s", {"tracer": "callTracer"}]}`+"\n", s.ID(), hash)
+}
+
+func getDebugTraceBlockByNumber(s State) string {
+	return fmt.Sprintf(`{"jsonrpc":"2.0","id":%d,"method":"debug_traceBlockByNumber","params":["latest", {"tracer": "callTracer"}]}`+"\n", s.ID())
+}
+
+func getDebugTraceBlockByHash(s State) string {
+	hash := s.RandomBlock()
+	return fmt.Sprintf(`{"jsonrpc":"2.0","id":%d,"method":"debug_traceBlockByHash","params":["%s", {"tracer": "callTracer"}]}`+"\n", s.ID(), hash)
 }
 
 func MakeQueriesGenerator(methods map[string]int64) (gen QueriesGenerator, err error) {
@@ -153,8 +227,8 @@ func MakeQueriesGenerator(methods map[string]int64) (gen QueriesGenerator, err e
 		"eth_call":                                genEthCall,
 		"eth_getTransactionReceipt":               genEthGetTransactionReceipt,
 		"eth_getBalance":                          genEthGetBalance,
-		"eth_getBalance#Archive":                  genEthGetBalanceArchive,
 		"eth_getBlockByNumber":                    genEthGetBlockByNumber,
+		"eth_getBlockByNumber#full":               genEthGetBlockByNumberFull,
 		"eth_getTransactionCount":                 genEthGetTransactionCount,
 		"eth_blockNumber":                         genEthBlockNumber,
 		"eth_getTransactionByHash":                genEthGetTransactionByHash,
@@ -162,6 +236,7 @@ func MakeQueriesGenerator(methods map[string]int64) (gen QueriesGenerator, err e
 		"eth_getCode":                             genEthGetCode,
 		"eth_estimateGas":                         genEthEstimateGas,
 		"eth_getBlockByHash":                      getEthGetBlockByHash,
+		"eth_getBlockByHash#full":                 getEthGetBlockByHashFull,
 		"eth_getTransactionByBlockNumberAndIndex": getEthGetTransactionByBlockNumberAndIndex,
 		"net_version":                             getNetVersion,
 		"eth_gasPrice":                            getEthGasPrice,
@@ -170,6 +245,21 @@ func MakeQueriesGenerator(methods map[string]int64) (gen QueriesGenerator, err e
 		"eth_syncing":                             getEthSyncing,
 		"eth_getStorageAt":                        getEthGetStorageAt,
 		"eth_accounts":                            getEthAccounts,
+		"eth_chainId":                             getEthChainId,
+		"eth_protocolVersion":                     getEthProtocolVersion,
+		"eth_feeHistory":                          getEthFeeHistory,
+		"eth_maxPriorityFeePerGas":                getEthMaxPriorityFeePerGas,
+		"eth_getTransactionByBlockHashAndIndex":   getEthGetTransactionByBlockHashAndIndex,
+		"eth_getBlockTransactionCountByHash":      getEthGetBlockTransactionCountByHash,
+		"eth_getBlockTransactionCountByNumber":    getEthGetBlockTransactionCountByNumber,
+		"eth_getBlockReceipts":                    getEthGetBlockReceipts,
+		"getTraceBlock":                           getTraceBlock,
+		"getTraceTransaction":                     getTraceTransaction,
+		"getTraceReplayTransaction":               getTraceReplayTransaction,
+		"getTraceReplayBlockTransactions":         getTraceReplayBlockTransactions,
+		"getDebugTraceTransaction":                getDebugTraceTransaction,
+		"getDebugTraceBlockByNumber":              getDebugTraceBlockByNumber,
+		"getDebugTraceBlockByHash":                getDebugTraceBlockByHash,
 	}
 
 	for method, weight := range methods {
