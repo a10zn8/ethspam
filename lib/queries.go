@@ -29,23 +29,16 @@ func genEthGetBalance(s State) string {
 	return fmt.Sprintf(`{"jsonrpc":"2.0","id":%d,"method":"eth_getBalance","params":["%s","latest"]}`+"\n", s.ID(), addr)
 }
 
-func genEthGetBalanceArchive(s State) string {
-	addr := s.RandomAddress()
-	r := s.RandInt64()
-	blockNum := s.CurrentBlock() - uint64(r%100) - 200
-	return fmt.Sprintf(`{"jsonrpc":"2.0","id":%d,"method":"eth_getBalance","params":["%s","0x%x"]}`+"\n", s.ID(), addr, blockNum)
-}
-
 func genEthGetBlockByNumber(s State) string {
 	r := s.RandInt64()
 	blockNum := s.CurrentBlock() - uint64(r%5) // Within the last ~minute
-	return fmt.Sprintf(`{"jsonrpc":"2.0","id":%d,"method":"eth_getBlockByNumber","params":["0x%x",%s]}`+"\n", s.ID(), blockNum, false)
+	return fmt.Sprintf(`{"jsonrpc":"2.0","id":%d,"method":"eth_getBlockByNumber","params":["0x%x",false]}`+"\n", s.ID(), blockNum)
 }
 
 func genEthGetBlockByNumberFull(s State) string {
 	r := s.RandInt64()
 	blockNum := s.CurrentBlock() - uint64(r%5) // Within the last ~minute
-	return fmt.Sprintf(`{"jsonrpc":"2.0","id":%d,"method":"eth_getBlockByNumber","params":["0x%x",%s]}`+"\n", s.ID(), blockNum, true)
+	return fmt.Sprintf(`{"jsonrpc":"2.0","id":%d,"method":"eth_getBlockByNumber","params":["0x%x",true]}`+"\n", s.ID(), blockNum)
 }
 
 func genEthGetTransactionCount(s State) string {
