@@ -193,6 +193,16 @@ func getDebugTraceBlockByHash(s State) string {
 	return fmt.Sprintf(`{"jsonrpc":"2.0","id":%d,"method":"debug_traceBlockByHash","params":["%s", {"tracer": "callTracer"}]}`+"\n", s.ID(), hash)
 }
 
+func getEthCreateAccessList(s State) string {
+	to, from, input, block := s.RandomCall()
+	return fmt.Sprintf(`{"jsonrpc":"2.0","id":%d,"method":"eth_createAccessList","params":[{"from": "%s", "to": "%s", "data": "%s"}, "0x%x"]}`+"\n", s.ID(), from, to, input, block-1)
+}
+
+func getEthGetProof(state State) string {
+	to, _, _, block := state.RandomCall()
+	return fmt.Sprintf(`{"jsonrpc":"2.0","id":%d,"method":"eth_getProof","params":["%s", ["0x0"], "0x%x"]}`+"\n", state.ID(), to, block-1)
+}
+
 func MakeQueriesGenerator(methods map[string]int64) (gen QueriesGenerator, err error) {
 	// Top queries by weight, pulled from a 5000 Infura query sample on Dec 2019.
 	//     3 "eth_accounts"
@@ -253,6 +263,8 @@ func MakeQueriesGenerator(methods map[string]int64) (gen QueriesGenerator, err e
 		"getDebugTraceTransaction":                getDebugTraceTransaction,
 		"getDebugTraceBlockByNumber":              getDebugTraceBlockByNumber,
 		"getDebugTraceBlockByHash":                getDebugTraceBlockByHash,
+		"eth_createAccessList":                    getEthCreateAccessList,
+		"eth_getProof":                            getEthGetProof,
 	}
 
 	for method, weight := range methods {
