@@ -185,7 +185,8 @@ func getDebugTraceTransaction(s State) string {
 }
 
 func getDebugTraceBlockByNumber(s State) string {
-	return fmt.Sprintf(`{"jsonrpc":"2.0","id":%d,"method":"debug_traceBlockByNumber","params":["latest", {"tracer": "callTracer"}]}`+"\n", s.ID())
+	block := s.CurrentBlock() - uint64(s.CurrentBlock()-1000)
+	return fmt.Sprintf(`{"jsonrpc":"2.0","id":%d,"method":"debug_traceBlockByNumber","params":["0x%x", {"tracer": "callTracer"}]}`+"\n", s.ID(), block)
 }
 
 func getDebugTraceBlockByHash(s State) string {
