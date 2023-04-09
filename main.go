@@ -126,7 +126,7 @@ func main() {
 			} else if err != nil {
 				exit(2, "failed to write generated query: %s", err)
 			} else {
-				queries <- q
+				queries <- q.GetBody()
 			}
 		}
 	}()
