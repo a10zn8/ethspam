@@ -16,7 +16,7 @@ type QueryContent struct {
 }
 
 func (q *QueryContent) GetBody() string {
-	return fmt.Sprintf(`{"jsonrpc":"2.0","Id":%d,"Method":"%s","Params":%s}`+"\n", q.Id, q.Method, q.Params)
+	return fmt.Sprintf(`{"jsonrpc":"2.0","id":%d,"method":"%s","params":%s}`+"\n", q.Id, q.Method, q.Params)
 }
 
 func genEthCall(s State) QueryContent {
